@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "banco-base-proyecto"
+version = "0.1.0"
+description = "Proyecto para recolección de datos de mercado"
+authors = [{name = "Tu Nombre"}]
+readme = "README.md"
+requires-python = ">=3.9,<3.10"
+dependencies = [
+    "pandas<2.0.0",  # Para mejor compatibilidad con Python 3.9
+    "feedparser",
+    "yfinance<0.2.0",
+    "requests",
+    "numpy<1.25.0"  # Última versión compatible con Python 3.9
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src"
+]
+testpaths = [
+    "tests"
+]
+
+[tool.black]
+target-version = ["py39"]
+line-length = 88
+include = '\.pyi?$'

@@ -19,9 +19,7 @@ def setup_logging():
     
     # Configurar handlers
     handlers = [
-        # Handler para archivo
         logging.FileHandler(log_file, mode='w'),  # 'w' para sobrescribir
-        # Handler para consola
         logging.StreamHandler(sys.stdout)
     ]
     
@@ -40,20 +38,18 @@ logger = logging.getLogger(__name__)
 # Agregar el directorio raíz al path de Python
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.data import MarketDataCollector
+from src.data.collectors import MarketDataCollector
 
 def test_banxico_data():
     """Test específico para datos de Banxico"""
     logger.info("\n=== Iniciando Prueba de Banxico ===")
     collector = MarketDataCollector()
     
-    # Definir período de prueba
     end_date = datetime.now().strftime('%Y-%m-%d')
     start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
     logger.info(f"Período de prueba: {start_date} a {end_date}")
     
     try:
-        # Obtener datos
         logger.info("Obteniendo datos de Banxico...")
         fx_data = collector.get_banxico_data(start_date, end_date)
         
@@ -61,7 +57,6 @@ def test_banxico_data():
             logger.info("✓ Datos obtenidos exitosamente")
             logger.info(f"Total de registros: {len(fx_data)}")
             
-            # Validar estructura
             expected_columns = ['usdmxn_fix']
             actual_columns = fx_data.columns.tolist()
             
@@ -70,28 +65,22 @@ def test_banxico_data():
             else:
                 logger.error(f"✗ Columnas incorrectas. Esperadas: {expected_columns}, Obtenidas: {actual_columns}")
             
-            # Mostrar datos de muestra
             logger.info("\nMuestra de datos:")
             logger.info(f"\n{fx_data.head(3)}")
-            
-            # Validar tipos de datos
             logger.info("\nTipos de datos:")
             logger.info(f"\n{fx_data.dtypes}")
             
-            # Validar rango de fechas
             fecha_inicial = fx_data.index.min().strftime('%Y-%m-%d')
             fecha_final = fx_data.index.max().strftime('%Y-%m-%d')
             logger.info("\nRango de fechas:")
             logger.info(f"Primera fecha: {fecha_inicial}")
             logger.info(f"Última fecha: {fecha_final}")
             
-            # Estadísticas básicas
             logger.info("\nEstadísticas:")
             logger.info(f"Valor mínimo: {fx_data['usdmxn_fix'].min():.4f}")
             logger.info(f"Valor máximo: {fx_data['usdmxn_fix'].max():.4f}")
             logger.info(f"Valor promedio: {fx_data['usdmxn_fix'].mean():.4f}")
             
-            # Verificar valores nulos
             nulos = fx_data.isnull().sum()
             if nulos.sum() == 0:
                 logger.info("✓ No hay valores nulos")
@@ -111,31 +100,38 @@ def test_yahoo_finance():
     end_date = datetime.now().strftime('%Y-%m-%d')
     start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
     
+    # Incluir el tipo de cambio USD/MXN junto con otros tickers
+    tickers = ['GFNORTEO.MX', 'VOLARA.MX', 'MXNUSD=X']
     try:
-        stocks = collector.get_yahoo_data(['GFNORTEO.MX'], start_date, end_date)
+        stocks = collector.get_yahoo_data(tickers, start_date, end_date)
+        
         if not stocks.empty:
             logger.info("✓ Datos obtenidos correctamente")
             logger.info(f"Total de registros: {len(stocks)}")
             logger.info("\nMuestra de datos:")
             logger.info(f"\n{stocks.head(2)}")
             
-            # Validar columnas esperadas
             expected_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-            if all(col in stocks.columns.get_level_values(1) for col in expected_columns):
-                logger.info("✓ Estructura de datos correcta")
-            else:
-                logger.warning("⚠ Algunas columnas esperadas no están presentes")
+            missing_columns_tickers = [
+                ticker for ticker in tickers if not all((ticker, col) in stocks.columns for col in expected_columns)
+            ]
             
-            # Verificar valores nulos
+            if missing_columns_tickers:
+                logger.warning(f"⚠ Algunas columnas esperadas no están presentes en los tickers: {missing_columns_tickers}")
+            else:
+                logger.info("✓ Estructura de datos correcta para todos los tickers")
+            
             nulos = stocks.isnull().sum().sum()
             if nulos == 0:
                 logger.info("✓ No hay valores nulos")
             else:
                 logger.warning(f"⚠ Se encontraron {nulos} valores nulos")
         else:
-            logger.warning("⚠ No se obtuvieron datos de Yahoo Finance")
+            logger.warning("⚠ No se obtuvieron datos de Yahoo Finance para los tickers especificados.")
     except Exception as e:
         logger.error(f"Error en Yahoo Finance: {str(e)}")
+
+
 
 def test_rss_news():
     """Test específico para RSS News"""
@@ -148,7 +144,6 @@ def test_rss_news():
             logger.info("✓ Noticias obtenidas correctamente")
             logger.info(f"Total de noticias: {len(news)}")
             
-            # Validar estructura
             expected_columns = ['title', 'summary', 'source', 'link', 'sentiment_score']
             if all(col in news.columns for col in expected_columns):
                 logger.info("✓ Estructura de datos correcta")
@@ -158,7 +153,6 @@ def test_rss_news():
             logger.info("\nÚltimas noticias:")
             logger.info(f"\n{news['title'].head(3)}")
             
-            # Verificar scores de sentimiento
             logger.info("\nEstadísticas de sentimiento:")
             logger.info(f"Sentimiento promedio: {news['sentiment_score'].mean():.3f}")
             logger.info(f"Sentimiento máximo: {news['sentiment_score'].max():.3f}")
