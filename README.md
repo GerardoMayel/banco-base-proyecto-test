@@ -98,6 +98,7 @@ flowchart TB
         K --> M[Señales Trading]
         K --> N[Métricas Riesgo]
     end
+```
 
 ### 3. Gestión de Datos
 
