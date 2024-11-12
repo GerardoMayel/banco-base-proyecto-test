@@ -133,8 +133,11 @@ def test_yahoo_finance():
 
 
 
+import logging
+from datetime import datetime, timedelta
+
 def test_rss_news():
-    """Test específico para RSS News"""
+    """Test específico para RSS News incluyendo noticias de la FED."""
     logger.info("\n=== Iniciando Prueba de RSS ===")
     collector = MarketDataCollector()
     
@@ -153,17 +156,29 @@ def test_rss_news():
             logger.info("\nÚltimas noticias:")
             logger.info(f"\n{news['title'].head(3)}")
             
-            logger.info("\nEstadísticas de sentimiento:")
+            # Verificar estadísticas de sentimiento general
+            logger.info("\nEstadísticas de sentimiento general:")
             logger.info(f"Sentimiento promedio: {news['sentiment_score'].mean():.3f}")
             logger.info(f"Sentimiento máximo: {news['sentiment_score'].max():.3f}")
             logger.info(f"Sentimiento mínimo: {news['sentiment_score'].min():.3f}")
+            
+            # Estadísticas de sentimiento específico para las noticias de la FED
+            fed_news = news[news['source'] == 'fed_minutas']
+            if not fed_news.empty:
+                logger.info("\nEstadísticas de sentimiento para noticias de la FED:")
+                logger.info(f"Sentimiento promedio FED: {fed_news['sentiment_score'].mean():.3f}")
+                logger.info(f"Sentimiento máximo FED: {fed_news['sentiment_score'].max():.3f}")
+                logger.info(f"Sentimiento mínimo FED: {fed_news['sentiment_score'].min():.3f}")
+            else:
+                logger.warning("⚠ No se obtuvieron noticias de la FED")
+
         else:
             logger.warning("⚠ No se obtuvieron noticias")
     except Exception as e:
         logger.error(f"Error en RSS: {str(e)}")
 
 def test_collector():
-    """Test completo del collector"""
+    """Test completo del collector incluyendo datos de la FED."""
     logger.info("\n=== Iniciando Test Completo del Collector ===")
     collector = MarketDataCollector()
     
@@ -182,6 +197,13 @@ def test_collector():
                 logger.info(f"✓ Datos obtenidos para {key}")
                 logger.info(f"Dimensiones: {df.shape}")
                 logger.info(f"Registros: {len(df)}")
+                
+                # Validación específica para noticias de la FED
+                if key == 'news' and 'fed_minutas' in df['source'].values:
+                    fed_news = df[df['source'] == 'fed_minutas']
+                    logger.info(f"✓ Noticias de la FED obtenidas: {len(fed_news)}")
+                else:
+                    logger.warning("⚠ No se obtuvieron noticias de la FED en este conjunto de datos.")
             else:
                 logger.warning(f"⚠ No se obtuvieron datos para {key}")
     except Exception as e:
@@ -200,3 +222,4 @@ if __name__ == "__main__":
         logger.error(f"\n✗ Error en las pruebas: {str(e)}")
     
     logger.info(f"\nPruebas finalizadas: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
