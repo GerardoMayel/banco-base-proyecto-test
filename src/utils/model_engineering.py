@@ -135,7 +135,7 @@ class ModelEngineer:
             batch_size=batch_size,
             validation_data=(test_data['X'], test_data['y']),
             callbacks=callbacks,
-            verbose=1
+            verbose=0
         )
         
         return pd.DataFrame(history.history)
